@@ -19,6 +19,7 @@ const db = mysql.createConnection({
   password: process.env.DB_PASSWORD,
   database: "bmx-new",
 });
+console.log(process.env.DB_USER);
 
 db.connect((err) => {
   if (err) {
