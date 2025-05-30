@@ -13,8 +13,9 @@ db.Round = require('./round')(sequelize, DataTypes);
 db.Club = require('./club')(sequelize,DataTypes);
 db.City = require('./city')(sequelize,DataTypes);
 db.Experience = require('./experience')(sequelize,DataTypes);
-db.Group = require('./group')(sequelize,DataTypes);
-db.CompetitionCategoryStage = require("./competition_category_stage")(sequelize,DataTypes);
+db.Hit = require('./hit')(sequelize,DataTypes);
+db.Stage = require('./stage')(sequelize,DataTypes);
+// db.CompetitionCategoryStage = require("./competition_category_stage")(sequelize,DataTypes);
 // Define Associations
 // Club - Athlete
 db.Club.hasMany(db.Athlete,{
@@ -39,16 +40,16 @@ db.Athlete.belongsTo(db.City,{
   targetId:'id_city'
 });
 // City - Competition
-db.City.hasMany(db.Competition,{
-  foreignKey: 'city_id',
-  sourceKey:'id_city',
-  onDelete: 'RESTRICT',
-  onUpdate:'CASCADE'
-});
-db.Competition.belongsTo(db.City,{
-  foreignKey: 'city_id',
-  targetId:'id_city'
-});
+// db.City.hasMany(db.Competition,{
+//   foreignKey: 'city_id',
+//   sourceKey:'id_city',
+//   onDelete: 'RESTRICT',
+//   onUpdate:'CASCADE'
+// });
+// db.Competition.belongsTo(db.City,{
+//   foreignKey: 'city_id',
+//   targetId:'id_city'
+// });
 // Bicycle - Category
 db.Bicycle.hasMany(db.Category,{
   foreignKey: 'bicycle_id',
@@ -72,64 +73,116 @@ db.Category.belongsTo(db.Experience,{
   targetId:'id_experience'
 });
 
-// PARTICIPATION ASSOCIATIONS
-db.Athlete.hasMany(db.Participation, { foreignKey: 'athlete_id' });
-db.Competition.hasMany(db.Participation, { foreignKey: 'competition_id' });
-db.Category.hasMany(db.Participation, { foreignKey: 'category_id' });
+// Stage - Competition
+db.Competition.hasMany(db.Stage,{
+  foreignKey: 'competition_id',
+  sourceKey:'id_competition',
+  onDelete: 'CASCADE',
+  onUpdate:'CASCADE'
+});
+db.Stage.belongsTo(db.Competition,{
+  foreignKey: 'competition_id',
+  targetId:'id_competition'
+});
+// Stage - Category
+db.Category.hasMany(db.Stage,{
+  foreignKey: 'category_id',
+  sourceKey:'idcategory',
+  onDelete: 'CASCADE',
+  onUpdate:'CASCADE'
+});
+db.Stage.belongsTo(db.Category,{
+  foreignKey: 'category_id',
+  targetId:'idcategory'
+});
+// Stage - Participation
+db.Stage.hasMany(db.Participation,{
+  foreignKey: 'stage_id',
+  sourceKey:'id_stage',
+  onDelete: 'CASCADE',
+  onUpdate:'CASCADE'
+});
+db.Participation.belongsTo(db.Stage,{
+  foreignKey: 'stage_id',
+  targetId:'id_stage'
+});
+// Stage - Hit
+db.Stage.hasMany(db.Hit,{
+  foreignKey: 'stage_id',
+  sourceKey:'id_stage',
+  onDelete: 'CASCADE',
+  onUpdate:'CASCADE'
+});
+db.Hit.belongsTo(db.Stage,{
+  foreignKey: 'stage_id',
+  targetId:'id_stage'
+});
+// Participation - Athlete
+db.Athlete.hasMany(db.Participation, { 
+  foreignKey: 'id_athlete',
+  onDelete: 'CASCADE',
+  onUpdate:'CASCADE'
+});
+db.Participation.belongsTo(db.Athlete, {
+  foreignKey: 'id_athlete'
+});
 
-db.Participation.belongsTo(db.Athlete, { foreignKey: 'athlete_id' });
-db.Participation.belongsTo(db.Competition, { foreignKey: 'competition_id' });
-db.Participation.belongsTo(db.Category, { foreignKey: 'category_id' });
+// PARTICIPATION ASSOCIATIONS
+// db.Competition.hasMany(db.Participation, { foreignKey: 'competition_id' });
+// db.Category.hasMany(db.Participation, { foreignKey: 'category_id' });
+
+// db.Participation.belongsTo(db.Competition, { foreignKey: 'competition_id' });
+// db.Participation.belongsTo(db.Category, { foreignKey: 'category_id' });
 
 
 // Group - Competition
-db.Competition.hasMany(db.Group,{
-  foreignKey: 'competition_id',
-  sourceKey:'id_competition',
-  onDelete: 'CASCADE',
-  onUpdate:'CASCADE'
-});
-db.Group.belongsTo(db.Competition,{
-  foreignKey: 'competition_id',
-  sourceKey:'id_competition',
-});
+// db.Competition.hasMany(db.Group,{
+//   foreignKey: 'competition_id',
+//   sourceKey:'id_competition',
+//   onDelete: 'CASCADE',
+//   onUpdate:'CASCADE'
+// });
+// db.Group.belongsTo(db.Competition,{
+//   foreignKey: 'competition_id',
+//   sourceKey:'id_competition',
+// });
 
 // Group - Category
-db.Category.hasMany(db.Group,{
-  foreignKey: 'category_id',
-  sourceKey:'idcategory',
-  onDelete: 'CASCADE',
-  onUpdate:'CASCADE'
-});
-db.Group.belongsTo(db.Category,{
-  foreignKey: 'category_id',
-  sourceKey:'idcategory',
-});
+// db.Category.hasMany(db.Group,{
+//   foreignKey: 'category_id',
+//   sourceKey:'idcategory',
+//   onDelete: 'CASCADE',
+//   onUpdate:'CASCADE'
+// });
+// db.Group.belongsTo(db.Category,{
+//   foreignKey: 'category_id',
+//   sourceKey:'idcategory',
+// });
 
 
-// CompetitionCategoryStage - Competition
-db.Competition.hasMany(db.CompetitionCategoryStage,{
-  foreignKey: 'competition_id',
-  sourceKey:'id_competition',
-  onDelete: 'CASCADE',
-  onUpdate:'CASCADE'
-});
-db.CompetitionCategoryStage.belongsTo(db.Competition,{
-  foreignKey: 'competition_id',
-  sourceKey:'id_competition',
-});
+// // CompetitionCategoryStage - Competition
+// db.Competition.hasMany(db.CompetitionCategoryStage,{
+//   foreignKey: 'competition_id',
+//   sourceKey:'id_competition',
+//   onDelete: 'CASCADE',
+//   onUpdate:'CASCADE'
+// });
+// db.CompetitionCategoryStage.belongsTo(db.Competition,{
+//   foreignKey: 'competition_id',
+//   sourceKey:'id_competition',
+// });
 
-// CompetitionCategoryStage - Category
-db.Category.hasMany(db.CompetitionCategoryStage,{
-  foreignKey: 'category_id',
-  sourceKey:'idcategory',
-  onDelete: 'CASCADE',
-  onUpdate:'CASCADE'
-});
-db.CompetitionCategoryStage.belongsTo(db.Category,{
-  foreignKey: 'category_id',
-  sourceKey:'idcategory',
-});
+// // CompetitionCategoryStage - Category
+// db.Category.hasMany(db.CompetitionCategoryStage,{
+//   foreignKey: 'category_id',
+//   sourceKey:'idcategory',
+//   onDelete: 'CASCADE',
+//   onUpdate:'CASCADE'
+// });
+// db.CompetitionCategoryStage.belongsTo(db.Category,{
+//   foreignKey: 'category_id',
+//   sourceKey:'idcategory',
+// });
 
 
 
@@ -138,13 +191,13 @@ db.Athlete.hasMany(db.Round, { foreignKey: 'athlete_id',
   onDelete: 'CASCADE',
   onUpdate:'CASCADE'
  });
-db.Group.hasMany(db.Round, { foreignKey: 'group_id',
+db.Hit.hasMany(db.Round, { foreignKey: 'hit_id',
   onDelete: 'CASCADE',
   onUpdate:'CASCADE'
- });
+});
 
 db.Round.belongsTo(db.Athlete, { foreignKey: 'athlete_id' });
-db.Round.belongsTo(db.Group, { foreignKey: 'group_id' });
+db.Round.belongsTo(db.Hit, { foreignKey: 'hit_id' });
 
 
 // db.Participation.hasMany(db.Round, {

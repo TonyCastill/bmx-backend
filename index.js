@@ -23,7 +23,6 @@ async function main(){ //A promise
                     IN p_name VARCHAR(255),
                     IN p_birthday DATE,
                     IN p_gender VARCHAR(100),
-                    IN p_years_compiting INT,
                     IN p_city_name VARCHAR(255)
                 )
                 BEGIN
@@ -46,8 +45,8 @@ async function main(){ //A promise
                     END IF;
 
                     -- Insert the user with calculated age
-                    INSERT INTO athlete (CURP, name, birthday, current_age, gender,years_competing,club_id,city_id) 
-                    VALUES (p_CURP, p_name, p_birthday, v_current_age, p_gender,p_years_compiting, NULL,v_city_id);
+                    INSERT INTO athlete (CURP, name, birthday, current_age, gender,club_id,city_id) 
+                    VALUES (p_CURP, p_name, p_birthday, v_current_age, p_gender, NULL,v_city_id);
 
                     -- Commit the transaction
                     COMMIT;

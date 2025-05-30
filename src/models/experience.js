@@ -8,9 +8,15 @@ module.exports = (sequelize, DataTypes) => {
       name: {
         type: DataTypes.STRING(45),
       },
-      years_required: {
-        type: DataTypes.INTEGER
-      },
+      /**
+       * Junior
+       * Elite
+       * Athlete
+       * Non-Athlete
+       */
+      // years_required: {
+      //   type: DataTypes.INTEGER
+      // },
     }, {
       tableName: 'experience',
       timestamps: false,

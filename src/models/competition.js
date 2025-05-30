@@ -8,13 +8,13 @@ module.exports = (sequelize, DataTypes) => {
       name: {
         type: DataTypes.STRING(150),
       },
-      date: {
-        type: DataTypes.DATEONLY,
-      },
-      city_id: {
-        type: DataTypes.INTEGER,
-        allowNull: false
-      },
+      // date: {
+      //   type: DataTypes.DATEONLY,
+      // },
+      // city_id: {
+        // type: DataTypes.INTEGER,
+        // allowNull: false
+      // },
     }, {
       tableName: 'competition',
       timestamps: false,

@@ -6,11 +6,11 @@ const CategoryController = {
     create_category: express_async_handler(async (req, res) => {
       try {
 
-        const { name, min_age, max_age, bicycle_id, experience_id } = req.body;
-        if (!name || min_age==null || max_age==null || bicycle_id==null || experience_id==null) {
+        const { name,gender, min_age, max_age, bicycle_id, experience_id } = req.body;
+        if (!name || !gender || min_age==null || max_age==null || bicycle_id==null || experience_id==null) {
           return res.status(400).json({ error: "All fields are required" });
         }
-        const newCategory = await Category.create({name, min_age, max_age, bicycle_id, experience_id});
+        const newCategory = await Category.create({name, gender,min_age, max_age, bicycle_id, experience_id});
         res.json(newCategory);
       } catch (error) {
         res.status(500).json({ message: error });
@@ -35,7 +35,7 @@ const CategoryController = {
           const { id } = req.params;
           await Category.destroy({
             where: {
-              id_category:id,
+              idcategory:id,
             },
           });
           res.status(204).send("category successfully deleted!");
