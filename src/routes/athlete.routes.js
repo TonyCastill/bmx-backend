@@ -6,7 +6,7 @@ const router = express.Router();
 
 router.get('/athlete',AthleteController.list_athletes);
 router.post('/athlete',AthleteController.create_athlete);
-router.post('/competition/:competition_id/athlete',AthleteController.create_athlete_and_participation);
+router.post('/stage/:stage_id/athlete',AthleteController.create_athlete_and_participation);
 router.delete('/athlete/:id',AthleteController.delete_athlete);
 router.put('/athlete/:id',AthleteController.update_athlete);
 router.get('/athlete/:id',AthleteController.get_athlete);

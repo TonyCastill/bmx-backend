@@ -1,18 +1,18 @@
 module.exports = (sequelize, DataTypes) => {
     const Participation = sequelize.define('participation', {
-      athlete_id: {
+      id_athlete: {
         type: DataTypes.INTEGER,
         primaryKey: true,
       },
-      competition_id: {
-        type: DataTypes.INTEGER,
-        primaryKey: true,
-      },
-      category_id: {
+      stage_id: {
         type: DataTypes.INTEGER,
         primaryKey: true,
       },
       ranking: {
+        type: DataTypes.INTEGER,
+        allowNull: true,
+      },
+      score: {
         type: DataTypes.INTEGER,
         allowNull: true,
       },

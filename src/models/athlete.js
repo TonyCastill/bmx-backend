@@ -24,9 +24,9 @@ module.exports = (sequelize, DataTypes) => {
       gender: {
         type: DataTypes.ENUM('HOMBRE', 'MUJER'),
       },
-      years_competing: {
-        type: DataTypes.INTEGER,
-      },
+      // years_competing: {
+      //   type: DataTypes.INTEGER,
+      // }, 
       club_id: {
         type: DataTypes.INTEGER,
         allowNull:true

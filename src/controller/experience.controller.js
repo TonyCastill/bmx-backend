@@ -6,11 +6,11 @@ const ExperienceController = {
     create_experience: express_async_handler(async (req, res) => {
       try {
 
-        const { name, years_required } = req.body;
-        if (name == null || years_required == null) {
+        const { name } = req.body;
+        if (name == null) {
             return res.status(400).json({ error: "All fields are required" });
         }
-        const newExperience = await Experience.create({name: name, years_required: years_required}); 
+        const newExperience = await Experience.create({name: name}); 
         // await sequelize.query(sql`CALL Registerexperience('${CURP}','${name}','${birthday}','${gender}','${experience}','${city}');`);
         res.json(newExperience);
         // res.status(200).send("experience successfully created!");

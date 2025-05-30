@@ -8,6 +8,9 @@ module.exports = (sequelize, DataTypes) => {
       name: {
         type: DataTypes.STRING(45),
       },
+      gender: {
+        type: DataTypes.ENUM('HOMBRE', 'MUJER'),
+      },
       min_age: {
         type: DataTypes.INTEGER,
       },

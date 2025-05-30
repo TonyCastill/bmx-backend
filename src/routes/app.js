@@ -7,7 +7,9 @@ const  cityRoutes = require('./city.routes');
 const  categoryRoutes = require('./category.routes');
 const  competitionRoutes = require('./competition.routes');
 const participationRoutes =require('./participation.routes');
-const groupRoutes = require('./group.routes');
+const hitRoutes = require('./hit.routes');
+const stageRoutes = require('./stage.routes');
+
 const roundRoutes = require('./round.routes');
 const bodyParser = require('body-parser');
 const app = express();
@@ -33,8 +35,9 @@ app.use(experienceRoutes);
 app.use(categoryRoutes);
 app.use(competitionRoutes);
 app.use(participationRoutes);
-app.use(groupRoutes);
+app.use(hitRoutes);
 app.use(roundRoutes);
+app.use(stageRoutes);
 //More about routes
 //https://expressjs.com/es/guide/routing.html
 module.exports= app;
