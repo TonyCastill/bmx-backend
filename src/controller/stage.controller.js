@@ -1,5 +1,5 @@
 const express_async_handler = require("express-async-handler");
-const { Op } = require("sequelize");
+const { Op, fn, col } = require("sequelize");
 // const sequelize = require('../config/database');
 const {
   Athlete,
@@ -12,6 +12,7 @@ const {
   Participation,
 } = require("../models");
 const { get } = require("http");
+const { penalty } = require("./round.controller");
 // const stage = require("../models/stage");
 // const bicycle = require("../models/bicycle");
 // const { where } = require("sequelize");
@@ -73,8 +74,25 @@ const StageController = {
           { model: Competition },
           { model: Category },
           {
+            model: Participation,
+            // as: "activeParticipations",
+            include: [{ model: Athlete }],
+            where: { ranking: { [Op.eq]: 0 } },
+          },
+          // {
+          //   model: Participation,
+          //   // as: "finishedParticipations",
+          //   include: [{ model: Athlete }],
+          //   where: { ranking: { [Op.ne]: 0 } },
+          // },
+          {
             model: Hit,
-            include: [{ model: Round, include: [{ model: Athlete }] }],
+            include: [
+              {
+                model: Round,
+                // include: [{ model: Athlete }]
+              },
+            ],
           },
         ],
       });
@@ -162,7 +180,7 @@ const StageController = {
     if (id_stage == null || id_stage == undefined) {
       throw new Error("id_stage is not defined");
     }
-    console.log("received athletes: ",athletes);
+    console.log("received athletes: ", athletes);
 
     const athletes_count = athletes.length;
     let num_rounds = 1;
@@ -182,7 +200,7 @@ const StageController = {
       // So this set is the final set
 
       await Stage.update(
-        { is_last_set: true }, // No modifications to hits, no more registrations
+        { is_last_set: true }, // Last set
         {
           where: {
             id_stage: id_stage,
@@ -342,7 +360,8 @@ const StageController = {
             round: roundNum,
             score: 0,
             starting_position: round_distribution[roundNum][playerIndex],
-            arriving_position: 0,
+            arriving_place: 0,
+            id_penalty: null, // Assuming no penalty initially
           });
         }
       });
@@ -423,13 +442,13 @@ const StageController = {
         console.log("es la final");
         console.log("id_stage: ", id_stage);
         // finalize
-        StageController.finalize_competition(stage.id_stage);
+        StageController.finalize_competition(stage.id_stage, stage.set_global);
         res.status(200).json({ message: "Stage finalized!" });
       } else {
         console.log("no es la final");
         console.log("id_stage: ", id_stage);
         // 1. Get all active hits for the stage
-        const hits  = await Hit.findAll({
+        const hits = await Hit.findAll({
           where: {
             [Op.and]: [{ stage_id: id_stage }, { active: true }],
           },
@@ -437,32 +456,35 @@ const StageController = {
         });
         // console.log("hits: ", hits);
         const hitIds = hits.map((hit) => hit.id_hit);
-        console.log("hits_ids",hitIds)
+        console.log("hits_ids", hitIds);
         // Get how many additional eliminated people will be eliminated
         const totalEliminationRule = hits.reduce(
           (sum, hit) => sum + (hit.elimination_rule || 0),
           0
         );
-        console.log("totalEliminationrule",totalEliminationRule)
+        console.log("totalEliminationrule", totalEliminationRule);
         let completion_rule = 0;
         if (!(totalEliminationRule % 8 === 0 || totalEliminationRule < 8)) {
-          console.log("aggregar eliminados")
+          console.log("aggregar eliminados");
           let current = 8;
-          while (num_qualified > current) {
+          //num_qualified
+          while (totalEliminationRule > current) {
             current *= 2;
           }
           // current is now 8, 16, 32, 64, ... just above num_qualified
           // Get the number of players to add to the advancing list
-          const toAdvance = Math.floor((current - num_qualified) / num_groups);
+          const toAdvance = Math.floor(
+            (current - totalEliminationRule) / hitIds.length
+          );
           completion_rule = toAdvance;
         }
 
         // Assume you have: hits, rounds, stage, and completion_rule defined
         const advancingAll = [];
         const eliminatedAll = [];
-
+        console.log("antes de rounds");
         const rounds = await Round.findAll({
-          where: { hit_id: hitIds },
+          where: { hit_id: { [Op.in]: hitIds } },
           include: [{ model: Athlete }],
           raw: true,
           nest: true,
@@ -482,9 +504,9 @@ const StageController = {
                 score: 0,
               };
             }
-            athleteScores[athleteId].score += round.arriving_position || 0;
+            athleteScores[athleteId].score += round.arriving_place || 0;
           });
-          console.log("scoresss:",athleteScores);
+          console.log("scoresss:", athleteScores);
           // Sort athletes in this hit
           let sortedAthletes;
           if (stage.set_global === 1) {
@@ -500,8 +522,8 @@ const StageController = {
               );
               if (aThirdRound && bThirdRound) {
                 return (
-                  (aThirdRound.arriving_position || Infinity) -
-                  (bThirdRound.arriving_position || Infinity)
+                  (aThirdRound.arriving_place || Infinity) -
+                  (bThirdRound.arriving_place || Infinity)
                 );
               }
               if (aThirdRound) return -1;
@@ -515,8 +537,10 @@ const StageController = {
           }
 
           // Divide into advancing and eliminated
+          console.log("antes de advancing count");
           const advancingCount =
             (hit.elimination_rule || 0) + (completion_rule || 0);
+          console.log("advancing_count", advancingCount);
           const advancing = sortedAthletes.slice(0, advancingCount);
           const eliminated = sortedAthletes.slice(advancingCount);
 
@@ -538,8 +562,8 @@ const StageController = {
             );
             if (aThirdRound && bThirdRound) {
               return (
-                (aThirdRound.arriving_position || Infinity) -
-                (bThirdRound.arriving_position || Infinity)
+                (aThirdRound.arriving_place || Infinity) -
+                (bThirdRound.arriving_place || Infinity)
               );
             }
             if (aThirdRound) return -1;
@@ -556,11 +580,11 @@ const StageController = {
         const eliminatedMergedSorted = eliminatedAll
           .sort(sortFn)
           .map((a) => a.athlete);
-        console.log("advancing: ",advancingMergedSorted);
+        console.log("advancing: ", advancingMergedSorted);
         // Eliminate players: assign ranking and set status to "eliminated"
         // stage.stage_tracking is your rank counter
         let rankCounter = stage.stage_tracking;
-        console.log("eliminated: ",eliminatedMergedSorted);
+        console.log("eliminated: ", eliminatedMergedSorted);
         for (const athlete of eliminatedMergedSorted) {
           // Update Participation: set ranking and status
           await Participation.update(
@@ -606,38 +630,79 @@ const StageController = {
       .sort((a, b) => a.sort - b.sort) // Step 2
       .map(({ value }) => value); // Step 3
   },
-  finalize_competition: async (id_stage) => {
+  finalize_competition: async (id_stage, set_global) => {
     // 1. Get the hit(s) with the given conditions
-    const hits = await Hit.findAll({
+    const hit = await Hit.findOne({
       where: { stage_id: id_stage, active: true },
     });
 
-    // If you want just one hit (e.g., the first one)
-    const hit = hits[0];
-
-    // 2. Get all rounds for this hit
-    const rounds = await Round.findAll({
+    const scores = await Round.findAll({
       where: { hit_id: hit.id_hit },
-      attributes: ["athlete_id"], // Only get athlete_id if that's all you need
+      attributes: ["athlete_id", [fn("SUM", col("score")), "total_score"]],
+      group: ["athlete_id"],
     });
 
-    // 3. Extract all athlete_ids
-    const athleteIds = rounds.map((r) => r.athlete_id);
+    const sortedScores = scores.sort((a, b) => {
+      // If using Sequelize objects, use .get("total_score")
+      // Otherwise, if plain objects, use a.total_score
+      const aScore =
+        typeof a.get === "function"
+          ? Number(a.get("total_score"))
+          : Number(a.total_score);
+      const bScore =
+        typeof b.get === "function"
+          ? Number(b.get("total_score"))
+          : Number(b.total_score);
+      return aScore - bScore;
+    });
 
-    // Final stage: assign rankings by position in the final group (advancingMergedSorted)
-    for (let i = 0; i < athleteIds.length; i++) {
-      // const athlete = athleteIds[i];
+    sortedScores.forEach(async (score,i) => {
+      const athleteId =
+        typeof score.get === "function"
+          ? score.get("athlete_id")
+          : score.athlete_id;
+      const totalScore =
+        typeof score.get === "function"
+          ? score.get("total_score")
+          : score.total_score;
+      console.log(`Athlete ID: ${athleteId}, Total Score: ${totalScore}`);
+
       await Participation.update(
         { ranking: i + 1, status: "completed", score: getFinalScore(i + 1) },
         {
           where: {
-            id_athlete: athleteIds[i],
+            id_athlete: athleteId,
             stage_id: id_stage,
           },
         }
       );
-      // Optionally: set eliminated_in or other fields if needed
-    }
+    });
+    // If you want just one hit (e.g., the first one)
+    // const hit = hits[0];
+
+    // // 2. Get all rounds for this hit
+    // const rounds = await Round.findAll({
+    //   where: { hit_id: hit.id_hit },
+    //   attributes: ["athlete_id"], // Only get athlete_id if that's all you need
+    // });
+
+    // // 3. Extract all athlete_ids
+    // const athleteIds = rounds.map((r) => r.athlete_id);
+
+    // // Final stage: assign rankings by position in the final group (advancingMergedSorted)
+    // for (let i = 0; i < athleteIds.length; i++) {
+    //   // const athlete = athleteIds[i];
+    // await Participation.update(
+    //   { ranking: i + 1, status: "completed", score: getFinalScore(i + 1) },
+    //   {
+    //     where: {
+    //       id_athlete: athleteIds[i],
+    //       stage_id: id_stage,
+    //     },
+    //   }
+    // );
+    //   // Optionally: set eliminated_in or other fields if needed
+    // }
   },
 };
 

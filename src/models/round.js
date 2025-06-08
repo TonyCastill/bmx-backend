@@ -1,5 +1,7 @@
 module.exports = (sequelize, DataTypes) => {
-    const Round = sequelize.define('round', {
+  const Round = sequelize.define(
+    "round",
+    {
       athlete_id: {
         type: DataTypes.INTEGER,
         primaryKey: true,
@@ -17,19 +19,25 @@ module.exports = (sequelize, DataTypes) => {
       },
       arriving_place: {
         type: DataTypes.INTEGER,
-        allowNull: true,        
+        allowNull: true,
       },
-      score:{
-        type:DataTypes.INTEGER,
+      score: {
+        type: DataTypes.INTEGER,
         allowNull: true,
         defaultValue: 0,
-      }
-    }, {
-      tableName: 'round',
+      },
+      id_penalty: {
+        type: DataTypes.INTEGER,
+        allowNull: true,
+        defaultValue: null,
+      },
+    },
+    {
+      tableName: "round",
       timestamps: false,
-      alter:true
-    });
-  
-    return Round;
-  };
-  
+      alter: true,
+    }
+  );
+
+  return Round;
+};

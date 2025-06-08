@@ -5,6 +5,7 @@ const RoundController = require('../controller/round.controller');
 const router = express.Router();
 
 router.put('/round/:round/hit/:hit_id/athlete/:athlete_id',RoundController.register_arriving_place);
+router.put('/round/:round/hit/:hit_id/athlete/:athlete_id/penalty/:id_penalty',RoundController.penalty);
 // router.get('/group/:id/athletes',groupController.get_athletes);
 
 

@@ -52,11 +52,12 @@ const AthleteController = {
           experience:experience, // ID of type of category (Junior, ELite, Athlete)
           gender:gender,name:name,
           bicycleInches: bicycleInches,
+          porta_numero:porta_numero = 0, // Default value for porta_numero
           // date:date
         } = req.body;
         const {stage_id} = req.params;
-
-        if (!CURP || !name || !birthday || !gender || bicycleInches== null || !city) {
+        console.log("el stage_id es:",stage_id);
+        if (!CURP || !name || !birthday || !gender || bicycleInches== null || !city || porta_numero == null) {
             return res.status(400).json({ message: "All fields are required" });
         }
         const checkCURP = await Athlete.findOne({where:{CURP:CURP}});
@@ -84,7 +85,7 @@ const AthleteController = {
           
           athlete = await Athlete.findOne({where:{CURP:CURP}});
         }
-        console.log("hola d2222")
+        // console.log("hola d2222")
         // console.log(checkCURP);
         // await sequelize.query(sql`CALL RegisterAthlete('${CURP}','${name}','${birthday}','${gender}','${experience}','${city}');`);
 
@@ -102,9 +103,14 @@ const AthleteController = {
                 min_age: { [Op.lte]: athlete.current_age },
                 max_age: { [Op.gte]: athlete.current_age },
                 gender: athlete.gender
+                // En prod, quitar este comentario
+                // gender: athlete.gender
               },
             });
-            if (!category)  {res.status(404).send("No category found");}
+            console.log("category",category);
+            if (category==null)  {
+              res.status(404).send("No category found");
+            }
 
             const stage = await Stage.findOne({
               include: [
@@ -115,23 +121,37 @@ const AthleteController = {
                 id_stage: stage_id
               },
             });
+            console.log("el stage es:",stage);
             if(!stage){
-              res.status(404).send("No category found");
+              res.status(404).send("No stage found");
             }else if(stage.locked){
               res.status(400).json({message:"No more registrations are allowed"});
             }
 
-            const newParticipation = await Participation.create(
-              {
-                id_athlete:athlete.id_athlete,
-                ranking:0,
-                score:0,
-                stage_id:stage.id_stage,
-                status:'registered'
+            // CHECK IF PARTICIPATION ALREADY EXISTS
+            const participation = await Participation.findOne({
+              where: {
+                id_athlete: athlete.id_athlete,
+                stage_id: stage.id_stage
               }
-            );
-            // StageController.stage_pre_distribution(stage.id_stage);
-            res.status(200).json(newParticipation);
+            });
+            if(participation){
+              return res.status(409).json({ message: "Athlete already registered for this stage" });
+            }else{
+              const newParticipation = await Participation.create(
+                {
+                  id_athlete:athlete.id_athlete,
+                  ranking:0,
+                  score:0,
+                  stage_id:stage.id_stage,
+                  status:'registered',
+                  porta_numero:porta_numero
+                }
+              );
+              // StageController.stage_pre_distribution(stage.id_stage);
+              res.status(200).json(newParticipation);
+            }
+
           }else{
             return res.status(404).json({ message: "Athlete not found" });
           }

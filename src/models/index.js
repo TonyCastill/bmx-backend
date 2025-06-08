@@ -15,6 +15,7 @@ db.City = require('./city')(sequelize,DataTypes);
 db.Experience = require('./experience')(sequelize,DataTypes);
 db.Hit = require('./hit')(sequelize,DataTypes);
 db.Stage = require('./stage')(sequelize,DataTypes);
+db.Penalty = require('./penalty')(sequelize,DataTypes);
 // db.CompetitionCategoryStage = require("./competition_category_stage")(sequelize,DataTypes);
 // Define Associations
 // Club - Athlete
@@ -125,6 +126,20 @@ db.Athlete.hasMany(db.Participation, {
 });
 db.Participation.belongsTo(db.Athlete, {
   foreignKey: 'id_athlete'
+});
+
+// PENALTY ASSOCIATIONS
+db.Penalty.hasMany(db.Round, {
+  foreignKey: 'id_penalty',
+  source: 'id_penalty',
+  onDelete: 'SET NULL',
+  onUpdate: 'CASCADE'
+});
+db.Round.belongsTo(db.Penalty, {
+  foreignKey: 'id_penalty',
+  target: 'id_penalty',
+  onDelete: 'SET NULL',
+  onUpdate: 'CASCADE'
 });
 
 // PARTICIPATION ASSOCIATIONS

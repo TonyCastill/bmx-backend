@@ -1,6 +1,6 @@
 const express_async_handler =  require("express-async-handler");
 // const sequelize = require('../config/database');
-const { Round}  = require("../models");
+const { Round, Penalty}  = require("../models");
 
 
 /**
@@ -46,7 +46,41 @@ const RoundController = {
         } catch (error) {
             res.status(500).json({ message: error });
         }
-    }),   
+    }),
+    penalty: express_async_handler(async (req, res) => {
+        try{
+            const {round,hit_id,athlete_id,id_penalty} = req.params;
+            // const { id_penalty }= req.body;
+            if(id_penalty == null || isNaN(id_penalty)){
+                res.status(400).send({message:"Penalty needed!"})
+            }else{
+                // Check if penalty exists
+                const penalty = await Penalty.findByPk(id_penalty);
+                if(!penalty){
+                    return res.status(404).send({message:"Penalty not found!"});
+                }
+
+                await Round.update(
+                    {
+                        id_penalty:id_penalty,
+                        arriving_place:penalty.penalty,
+                        score: penalty.penalty
+                    },
+                    {
+                        where:{
+                            round:round,
+                            hit_id:hit_id,
+                            athlete_id:athlete_id
+                        }
+                    }
+                )
+                res.status(200).send("Status successfully updated");
+            }
+
+        } catch (error) {
+            res.status(500).json({ message: error });
+        }
+    })
 }
 
 module.exports=RoundController;
