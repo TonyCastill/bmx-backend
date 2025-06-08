@@ -17,7 +17,7 @@ const ParticipationController = {
   create_participation: express_async_handler(async (req, res) => {
     try {
       const { stage_id, athlete_id } = req.params;
-      const { ranking = 0, score =0, status = "registered", bicycleInches } = req.body;
+      const { ranking = 0, score =0, status = "registered", bicycleInches, porta_numero=0 } = req.body;
 
       if (bicycleInches == null) {
         return res.status(400).json({ message: "All fields are required" });
@@ -44,16 +44,29 @@ const ParticipationController = {
       if (!stage) {
         res.status(404).send("No stage found");
       }
-
-      const newParticipation = await Participation.create({
-        id_athlete:athlete_id,
-        stage_id:stage_id,
-        ranking:ranking,
-        score:score,
-        status:status,
+      // Check if the athlete is already registered for the stage
+      const existingParticipation = await Participation.findOne({
+        where: {
+          id_athlete: athlete_id,
+          stage_id: stage_id,
+        },
       });
-      // StageController.get_hit_distribution(stage_id);
-      res.status(200).json(newParticipation);
+      if (existingParticipation) {
+        return res.status(400).json({
+          message: "Athlete is already registered for this stage",
+        });
+      }else{
+        const newParticipation = await Participation.create({
+          id_athlete:athlete_id,
+          stage_id:stage_id,
+          ranking:ranking,
+          score:score,
+          status:status,
+          porta_numero:porta_numero
+        });
+        // StageController.get_hit_distribution(stage_id);
+        res.status(200).json(newParticipation);
+      }
     } catch (error) {
       res.status(500).json({ message: error });
     }

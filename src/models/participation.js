@@ -20,6 +20,11 @@ module.exports = (sequelize, DataTypes) => {
         type: DataTypes.ENUM('registered', 'completed', 'disqualified'),
         defaultValue: 'registered',
       },
+      porta_numero: {
+        type: DataTypes.INTEGER,
+        allowNull: false,
+        defaultValue: 0,
+      },
     }, {
       tableName: 'participation',
       timestamps: false,

@@ -9,6 +9,7 @@ const  competitionRoutes = require('./competition.routes');
 const participationRoutes =require('./participation.routes');
 const hitRoutes = require('./hit.routes');
 const stageRoutes = require('./stage.routes');
+const penaltyRoutes = require('./penalty.routes');
 
 const roundRoutes = require('./round.routes');
 const bodyParser = require('body-parser');
@@ -38,6 +39,7 @@ app.use(participationRoutes);
 app.use(hitRoutes);
 app.use(roundRoutes);
 app.use(stageRoutes);
+app.use(penaltyRoutes);
 //More about routes
 //https://expressjs.com/es/guide/routing.html
 module.exports= app;
