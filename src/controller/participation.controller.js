@@ -17,7 +17,7 @@ const ParticipationController = {
   create_participation: express_async_handler(async (req, res) => {
     try {
       const { stage_id, athlete_id } = req.params;
-      const { ranking = 0, score =0, status = "registered", bicycleInches, porta_numero=0 } = req.body;
+      const { ranking = 0, score =0, status = "registered", bicycleInches, porta_numero=0, last_result = 0 } = req.body;
 
       if (bicycleInches == null) {
         return res.status(400).json({ message: "All fields are required" });
@@ -62,7 +62,8 @@ const ParticipationController = {
           ranking:ranking,
           score:score,
           status:status,
-          porta_numero:porta_numero
+          porta_numero:porta_numero,
+          last_result:last_result
         });
         // StageController.get_hit_distribution(stage_id);
         res.status(200).json(newParticipation);
@@ -165,10 +166,11 @@ const ParticipationController = {
   update_participation: express_async_handler(async (req, res) => {
     try {
       const { stage_id, athlete_id } = req.params;
-      const { ranking, score, status } = req.body;
+      const { ranking, score, status, last_result } = req.body;
       if (
         !status ||
         ranking == null ||
+        last_result == null ||
         score == null ||
         stage_id == null ||
         athlete_id == null

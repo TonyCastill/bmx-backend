@@ -2,7 +2,7 @@ module.exports = (sequelize, DataTypes) => {
   const Round = sequelize.define(
     "round",
     {
-      athlete_id: {
+      id_participation: {
         type: DataTypes.INTEGER,
         primaryKey: true,
       },

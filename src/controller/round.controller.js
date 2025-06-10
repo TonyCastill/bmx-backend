@@ -21,7 +21,7 @@ const { Round, Penalty}  = require("../models");
 const RoundController = {
     register_arriving_place: express_async_handler(async (req, res) => {
         try{
-            const {round,hit_id,athlete_id} = req.params;
+            const {round,hit_id,athlete_id: id_participation} = req.params;
             const { arriving_place }= req.body;
             if(arriving_place == null || isNaN(arriving_place)){
                 res.status(400).send({message:"Arriving place needed!"})
@@ -36,7 +36,7 @@ const RoundController = {
                         where:{
                             round:round,
                             hit_id:hit_id,
-                            athlete_id:athlete_id
+                            id_participation:id_participation
                         }
                     }
                 )
@@ -49,7 +49,7 @@ const RoundController = {
     }),
     penalty: express_async_handler(async (req, res) => {
         try{
-            const {round,hit_id,athlete_id,id_penalty} = req.params;
+            const {round,hit_id,athlete_id: id_participation,id_penalty} = req.params;
             // const { id_penalty }= req.body;
             if(id_penalty == null || isNaN(id_penalty)){
                 res.status(400).send({message:"Penalty needed!"})
@@ -70,7 +70,7 @@ const RoundController = {
                         where:{
                             round:round,
                             hit_id:hit_id,
-                            athlete_id:athlete_id
+                            id_participation:id_participation
                         }
                     }
                 )

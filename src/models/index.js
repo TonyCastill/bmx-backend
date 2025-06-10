@@ -202,7 +202,7 @@ db.Round.belongsTo(db.Penalty, {
 
 
 // Round Association
-db.Athlete.hasMany(db.Round, { foreignKey: 'athlete_id',
+db.Participation.hasMany(db.Round, { foreignKey: 'id_participation',
   onDelete: 'CASCADE',
   onUpdate:'CASCADE'
  });
@@ -211,7 +211,7 @@ db.Hit.hasMany(db.Round, { foreignKey: 'hit_id',
   onUpdate:'CASCADE'
 });
 
-db.Round.belongsTo(db.Athlete, { foreignKey: 'athlete_id' });
+db.Round.belongsTo(db.Participation, { foreignKey: 'id_participation' });
 db.Round.belongsTo(db.Hit, { foreignKey: 'hit_id' });
 
 
