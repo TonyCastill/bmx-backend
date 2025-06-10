@@ -1,7 +1,7 @@
 const express_async_handler =  require("express-async-handler");
 
 // const sequelize = require('../config/database');
-const { Hit, Round, Athlete}  = require("../models");
+const { Hit, Round, Participation,Athlete}  = require("../models");
 
 
 const HitController = {
@@ -35,7 +35,9 @@ const HitController = {
             {
               model: Round,
               include:[
-                {model: Athlete}
+                {model: Participation,
+                  include:[{model: Athlete}]
+                }
               ]
             }
           ],
@@ -64,7 +66,9 @@ const HitController = {
                 round:round
               },
               include:[
-                {model: Athlete}
+                {model: Participation,
+                  include:[{model: Athlete}]
+                }
               ]
             }
           ],

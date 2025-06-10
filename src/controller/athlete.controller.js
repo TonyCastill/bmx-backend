@@ -145,7 +145,8 @@ const AthleteController = {
                   score:0,
                   stage_id:stage.id_stage,
                   status:'registered',
-                  porta_numero:porta_numero
+                  porta_numero:porta_numero,
+                  last_result:0
                 }
               );
               // StageController.stage_pre_distribution(stage.id_stage);

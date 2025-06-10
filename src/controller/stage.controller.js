@@ -13,6 +13,7 @@ const {
 } = require("../models");
 const { get } = require("http");
 const { penalty } = require("./round.controller");
+const participation = require("../models/participation");
 // const stage = require("../models/stage");
 // const bicycle = require("../models/bicycle");
 // const { where } = require("sequelize");
@@ -293,7 +294,7 @@ const StageController = {
           if (validSizes && balanced) {
             // Distribute players
             console.log("num_rounds is ", num_rounds);
-            const groups = StageController.distributeSnake(
+            const groups = StageController.distributeRoundRobin(
               athletes,
               numGroups,
               id_stage,
@@ -315,25 +316,29 @@ const StageController = {
     }
   },
   // num_rounds: number of rounds to create
-  distributeSnake: async (players, numGroups, stage_id, num_rounds) => {
+  distributeRoundRobin: async (players, numGroups, stage_id, num_rounds) => {
     const groups = Array.from({ length: numGroups }, () => []);
-    let index = 0;
-    let direction = 1;
+    // let index = 0;
+    // let direction = 1;
 
-    // Distribute players in snake pattern
-    while (index < players.length) {
-      const range =
-        direction === 1
-          ? [...Array(numGroups).keys()]
-          : [...Array(numGroups).keys()].reverse();
+    // // Distribute players in snake pattern
+    // while (index < players.length) {
+    //   const range =
+    //     direction === 1
+    //       ? [...Array(numGroups).keys()]
+    //       : [...Array(numGroups).keys()].reverse();
 
-      for (const i of range) {
-        if (index >= players.length) break;
-        groups[i].push(players[index]);
-        index++;
-      }
-      direction *= -1;
-    }
+    //   for (const i of range) {
+    //     if (index >= players.length) break;
+    //     groups[i].push(players[index]);
+    //     index++;
+    //   }
+    //   direction *= -1;
+    // }
+    // Round Robin
+    players.forEach((player, idx) => {
+      groups[idx % numGroups].push(player);
+    });
     // Create Hit instances and assign players to each Hit
     const hits = [];
     for (let i = 0; i < groups.length; i++) {
@@ -356,7 +361,7 @@ const StageController = {
         for (let roundNum = 1; roundNum <= num_rounds; roundNum++) {
           await Round.create({
             hit_id: hit.id_hit,
-            athlete_id: player.id_athlete, // or player.id
+            id_participation: player.id_participation, // or player.id
             round: roundNum,
             score: 0,
             starting_position: round_distribution[roundNum][playerIndex],
@@ -485,7 +490,7 @@ const StageController = {
         console.log("antes de rounds");
         const rounds = await Round.findAll({
           where: { hit_id: { [Op.in]: hitIds } },
-          include: [{ model: Athlete }],
+          include: [{ model: Participation }],
           raw: true,
           nest: true,
         });
@@ -497,10 +502,10 @@ const StageController = {
           // Group by athlete and sum arriving_position
           const athleteScores = {};
           hitRounds.forEach((round) => {
-            const athleteId = round.athlete_id;
+            const athleteId = round.id_participation;
             if (!athleteScores[athleteId]) {
               athleteScores[athleteId] = {
-                athlete: round.athlete,
+                participation: round.participation,
                 score: 0,
               };
             }
@@ -515,10 +520,14 @@ const StageController = {
                 return a.score - b.score;
               }
               const aThirdRound = hitRounds.find(
-                (r) => r.athlete_id === a.athlete.id_athlete && r.round === 3
+                (r) =>
+                  r.id_participation === a.participation.id_participation &&
+                  r.round === 3
               );
               const bThirdRound = hitRounds.find(
-                (r) => r.athlete_id === b.athlete.id_athlete && r.round === 3
+                (r) =>
+                  r.id_participation === b.participation.id_participation &&
+                  r.round === 3
               );
               if (aThirdRound && bThirdRound) {
                 return (
@@ -545,9 +554,9 @@ const StageController = {
           const eliminated = sortedAthletes.slice(advancingCount);
 
           // Instead of just pushing the athlete object, push an object with athlete and index
-          advancing.forEach((athlete, idx) => {
+          advancing.forEach((participation, idx) => {
             advancingAll.push({
-              athlete: athlete.athlete, // or just athlete if that's your structure
+              participation: participation.participation,
               originalIndex: idx,
             });
           });
@@ -563,10 +572,14 @@ const StageController = {
           }
           if (stage.set_global === 1) {
             const aThirdRound = rounds.find(
-              (r) => r.athlete_id === a.athlete.id_athlete && r.round === 3
+              (r) =>
+                r.id_participation === a.participation.id_participation &&
+                r.round === 3
             );
             const bThirdRound = rounds.find(
-              (r) => r.athlete_id === b.athlete.id_athlete && r.round === 3
+              (r) =>
+                r.id_participation === b.participation.id_participation &&
+                r.round === 3
             );
             if (aThirdRound && bThirdRound) {
               return (
@@ -584,19 +597,39 @@ const StageController = {
 
         // advancingMergedSorted: all advancing athletes, sorted
         // eliminatedMergedSorted: all eliminated athletes, sorted
-        const advancingMergedSorted = advancingAll
-          // .sort(sortFn)
-          .sort(sortByOriginalIndex)
-          .map((a) => a.athlete);
+        // const advancingMergedSorted = advancingAll
+        //   .sort(sortByOriginalIndex)
+        //   .map((a) => a.participation);
+
+        // Sort advancingAll by originalIndex
+        const advancingAllSorted = advancingAll.sort(sortByOriginalIndex);
+
+        // Update last_result for each advancing participation
+        for (const item of advancingAllSorted) {
+          await Participation.update(
+            { last_result: item.originalIndex },
+            {
+              where: {
+                id_participation: item.participation.id_participation,
+              },
+            }
+          );
+        }
+
+        // If you still need the merged sorted list:
+        const advancingMergedSorted = advancingAllSorted.map(
+          (a) => a.participation
+        );
+
         const eliminatedMergedSorted = eliminatedAll
           .sort(sortFn)
-          .map((a) => a.athlete);
+          .map((a) => a.participation);
         console.log("advancing: ", advancingMergedSorted);
         // Eliminate players: assign ranking and set status to "eliminated"
         // stage.stage_tracking is your rank counter
         let rankCounter = stage.stage_tracking;
         console.log("eliminated: ", eliminatedMergedSorted);
-        for (const athlete of eliminatedMergedSorted) {
+        for (const participation of eliminatedMergedSorted) {
           // Update Participation: set ranking and status
           await Participation.update(
             {
@@ -606,13 +639,15 @@ const StageController = {
             },
             {
               where: {
-                id_athlete: athlete.id_athlete,
-                stage_id: stage.id_stage,
+                // id_athlete: participation.id_athlete,
+                // stage_id: stage.id_stage,
+                id_participation: participation.id_participation,
               },
             }
           );
           rankCounter -= 1;
         }
+
         // Set previous
         stage.increment("set_global", { by: 1 }); // New set
         // Set previous hits as inactive
