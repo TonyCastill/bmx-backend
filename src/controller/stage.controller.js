@@ -544,7 +544,15 @@ const StageController = {
           const advancing = sortedAthletes.slice(0, advancingCount);
           const eliminated = sortedAthletes.slice(advancingCount);
 
-          advancingAll.push(...advancing);
+          // Instead of just pushing the athlete object, push an object with athlete and index
+          advancing.forEach((athlete, idx) => {
+            advancingAll.push({
+              athlete: athlete.athlete, // or just athlete if that's your structure
+              originalIndex: idx,
+            });
+          });
+
+          // advancingAll.push(...advancing);
           eliminatedAll.push(...eliminated);
         }
 
@@ -572,10 +580,13 @@ const StageController = {
           return 0;
         };
 
+        const sortByOriginalIndex = (a, b) => a.originalIndex - b.originalIndex;
+
         // advancingMergedSorted: all advancing athletes, sorted
         // eliminatedMergedSorted: all eliminated athletes, sorted
         const advancingMergedSorted = advancingAll
-          .sort(sortFn)
+          // .sort(sortFn)
+          .sort(sortByOriginalIndex)
           .map((a) => a.athlete);
         const eliminatedMergedSorted = eliminatedAll
           .sort(sortFn)
@@ -656,7 +667,7 @@ const StageController = {
       return aScore - bScore;
     });
 
-    sortedScores.forEach(async (score,i) => {
+    sortedScores.forEach(async (score, i) => {
       const athleteId =
         typeof score.get === "function"
           ? score.get("athlete_id")
